@@ -51,7 +51,6 @@ with open('input.txt') as f:
         if lastDigitPos != posCtr - 1: # -1 cuz it's also looping on \n
             # find any higher string representations
             lastSubStr = line[lastDigitPos:posCtr]
-            print(lastSubStr)
             lastSubStrPos = 0
             lastStringNum = -1
             for num in numList:
