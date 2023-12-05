@@ -68,28 +68,91 @@ def seedLookups(seeds):
 def changeSeedsRange(seeds):
     seeds["seeds"] = [(seeds["seeds"][i], seeds["seeds"][i + 1]) for i in range(0, len(seeds["seeds"]) - 1, 2)]
     seeds["seeds"] = merge_ranges(seeds["seeds"])
-def seedLookups2(seeds):
+
+def seedLookups2(seeds):    
+    #hold the ranges as they're translated
+    translatePairs = {
+        'seeds': seeds['seeds'],
+        'soil': [],
+        'fertilizer': [],
+        'water': [],
+        'light': [],
+        'temperature': [],
+        'humidity': [],
+        'location': []
+    }
+
+    #translate seeds
+    print("seeds")
+    for seedPair in translatePairs['seeds']:
+        translate2(seedPair, seeds, "seed-to-soil map", translatePairs, 'seeds', 'soil')
+    print("soil")
+    print(translatePairs['soil'])
+    for soilPair in translatePairs['soil']:
+        translate2(soilPair, seeds, "soil-to-fertilizer map", translatePairs, 'soil', 'fertilizer')
+    print("fert")
+    for fertPair in translatePairs['fertilizer']:
+        translate2(fertPair, seeds, "fertilizer-to-water map", translatePairs, 'fertilizer', 'water')
+    print("water")
+    for waterPair in translatePairs['water']:
+        translate2(waterPair, seeds, "water-to-light map", translatePairs, 'water', 'light')
+    print("light")
+    print(translatePairs['light'])
+    for lightPair in translatePairs['light']:
+        #print(lightPair)
+        translate2(lightPair, seeds, "light-to-temperature map", translatePairs, 'light', 'temperature')
+    print("temp")
+    for tempPair in translatePairs['temperature']:
+        translate2(tempPair, seeds, "temperature-to-humidity map", translatePairs, 'temperature', 'humidity')
+    print("humidity")
+    for humidPair in translatePairs['humidity']:
+        translate2(humidPair, seeds, "humidity-to-location map", translatePairs, 'humidity', 'location')
+
     minLocationNum = float('inf')
-    print(seeds['seeds'])
-    for seedPair in seeds['seeds']:
-        # right here is where I need to work on a better solution cuz this loop runs too many times
-        print("starting " + str(seedPair))
-        ctr = seedPair[0]
-        while ctr <= seedPair[0] + seedPair[1]:
-            soilNum = translate(ctr, seeds, "seed-to-soil map")
-            fertNum = translate(soilNum, seeds, "soil-to-fertilizer map")
-            waterNum = translate(fertNum, seeds, "fertilizer-to-water map")
-            lightNum = translate(waterNum, seeds, "water-to-light map")
-            tempNum = translate(lightNum, seeds, "light-to-temperature map")
-            humidNum = translate(tempNum, seeds, "temperature-to-humidity map")
-            locNum = translate(humidNum, seeds, "humidity-to-location map")
-            if locNum < minLocationNum:
-                minLocationNum = locNum
-            ctr += 1
-            if ctr % 1000000 == 0:
-                print(ctr)
+    print("loc")
+    for locPair in translatePairs['location']:
+        if locPair[0] < minLocationNum:
+            minLocationNum = locPair[0]
+
     return minLocationNum
 
+def translate2(searchPair, seeds, dictStr, translatePairs, srcString, destString):
+    # destRange, srcRange, length
+    for row in seeds[dictStr]:
+        destRangeStart = row[0]
+        srcRangeStart = row[1]
+        length = row[2]
+
+        # what if they fully overlap
+        if searchPair[0] >= srcRangeStart and searchPair[0] + searchPair[1] <= srcRangeStart + length:
+            translatePairs[destString].append((searchPair[0] + destRangeStart, searchPair[1]))
+        # what if they partially overlap
+        elif searchPair[0] <= srcRangeStart + length and searchPair[0] + searchPair[1] >= srcRangeStart:
+            overlapStart = max(searchPair[0], srcRangeStart)
+            overlapEnd = min(searchPair[0] + searchPair[1], srcRangeStart + length)
+            overlapRange = overlapEnd - overlapStart
+            noOverlapLow = [-1,-1]
+            noOverlapHigh = [-1,-1]
+
+            # find start of low overlap
+            if searchPair[0] < overlapStart:
+                noOverlapLow[0] = searchPair[0]
+                noOverlapLow[1] = overlapStart - noOverlapLow[0]
+            if overlapEnd < searchPair[0] + searchPair[1]:
+                # gets the size of the past the range
+                noOverlapHigh[1] = searchPair[0] + searchPair[1] - overlapEnd
+                noOverlapHigh[0] = overlapEnd + 1
+            if noOverlapLow != [-1, -1]:
+                translatePairs[srcString].append((noOverlapLow[0], noOverlapLow[1]))
+            if noOverlapHigh != [-1, -1]:
+                translatePairs[srcString].append((noOverlapHigh[0], noOverlapHigh[1]))
+            translatePairs[destString].append((overlapStart, overlapRange))
+        # otherwise, no overlap, carryon
+        else:
+            pass
+
+    # if no match found, just return the number unmodified
+    translatePairs[destString].append(searchPair)
 
 def merge_ranges(pairs):
     # Sort the pairs based on the start values
@@ -121,8 +184,10 @@ def part1():
 def part2():
     print("Part 2")
     seeds = makeEmptySeeds()
-    parseInput("input.txt", seeds)
+    parseInput("testinput.txt", seeds)
     changeSeedsRange(seeds)
+    print(seeds)
+
     print(seedLookups2(seeds))
 
 startTime = time.time()
