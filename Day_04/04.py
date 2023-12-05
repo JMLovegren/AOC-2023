@@ -1,3 +1,6 @@
+import time
+
+
 def part1():
     with open("input.txt") as f:
         accum = 0
@@ -64,8 +67,18 @@ def findournums(line):
     numList = [int(match) for match in ourSection]
     return numList
 
+startTime = time.time()
 part1()
+endTime = time.time()
+elapsed = (endTime - startTime) * 1000
+print("Part one ran in " + str(elapsed) + " ms")
+
+
+startTime = time.time()
 part2()
+endTime = time.time()
+elapsed = (endTime - startTime) * 1000
+print("Part two ran in " + str(elapsed) + " ms")
 
 
 """
